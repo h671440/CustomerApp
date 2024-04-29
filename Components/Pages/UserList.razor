@@ -1,0 +1,32 @@
+﻿@page "/users"
+
+@using CustomerApp.Models.Entities
+@inject IUserService UserService
+
+<h3>UserList</h3>
+
+@if(users == null)
+{
+    <span>Loading...</span>
+
+} else if (users.Count == 0)
+{
+    <span>No users found.</span>
+} else
+{
+    <ul>
+        @foreach (var user in users)
+        {
+            <li>@user.Username</li>
+        }
+    </ul>
+}
+
+@code {
+    List<User>? users = null;
+
+    protected override async Task OnInitializedAsync()
+    {
+        users = await UserService.GetAllUsers();
+    }
+}

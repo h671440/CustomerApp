@@ -1,0 +1,80 @@
+﻿@page "/reservation"
+@using CustomerApp.Services
+@using CustomerApp.Models.Entities
+@inject IReservasjonsService ReservasjonsService
+@inject IRoomService RoomService
+
+<PageTitle>Reserver rom</PageTitle>
+
+<h1>Booking av rom</h1>
+
+@if (rooms != null && rooms.Count > 0)
+{
+    <select @bind="valgtRomId">
+        @foreach (var room in rooms)
+        {
+            <option value="@room.RoomId">@room.RoomType</option>
+        }
+    </select>
+    <p>Selected Room Type: @selectedRoomType</p>
+}
+else
+{
+    <p>No rooms available.</p>
+}
+
+<input type="date" @bind="startDato" />
+<input type="date" @bind="sluttDato" />
+<input type="hidden" @bind="brukerId" />
+
+<button @onclick="BookRoom">Reserver rom</button>
+<p>@bookingMessage</p>
+
+@code {
+    private int _valgtRomId;
+    public int valgtRomId
+    {
+        get => _valgtRomId;
+        set
+        {
+            if (_valgtRomId != value)
+            {
+                _valgtRomId = value;
+                OnValgtRomIdChanged();
+            }
+        }
+    }
+    private string selectedRoomType;
+    private List<Room> rooms;
+    private DateTime startDato = DateTime.Now;
+    private DateTime sluttDato = DateTime.Now.AddDays(1);
+    private string bookingMessage;
+    private int brukerId = 5;
+
+    protected override async Task OnInitializedAsync()
+    {
+        rooms = await RoomService.GetAllRooms();
+        if (rooms != null && rooms.Any())
+        {
+            valgtRomId = rooms.First().RoomId;
+            selectedRoomType = rooms.First().RoomType; // Initialize with first room's type
+        }
+        else
+        {
+            rooms = new List<Room>();
+            selectedRoomType = "No selection"; // Handle no rooms available
+        }
+    }
+
+    private void OnValgtRomIdChanged()
+    {
+        var selectedRoom = rooms.FirstOrDefault(room => room.RoomId == valgtRomId);
+        selectedRoomType = selectedRoom?.RoomType ?? "No selection";
+    }
+
+    private async Task BookRoom()
+    {
+        var reservation = await ReservasjonsService.ReserverRom(valgtRomId, brukerId, startDato, sluttDato);
+        bookingMessage = reservation != null ? "Valid booking" : "Not valid booking";
+    }
+}
